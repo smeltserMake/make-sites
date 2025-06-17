@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compression Tool - make-sites</title>
+    <meta name="description" content="Create compressed data URLs for sharing web content with make-sites">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .compress-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .compress-form {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-group textarea {
+            font-family: var(--font-mono);
+            min-height: 300px;
+            resize: vertical;
+        }
+        
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .compress-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .compress-button:hover {
+            background: var(--primary-dark);
+        }
+        
+        .compress-button:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+        }
+        
+        .result-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        
+        .url-result {
+            background: var(--bg-code);
+            color: var(--text-inverse);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            word-break: break-all;
+            margin: 1rem 0;
+            position: relative;
+        }
+        
+        .url-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .action-button {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-medium);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .action-button:hover {
+            background: var(--bg-secondary);
+            border-color: var(--primary);
+        }
+        
+        .action-button.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .action-button.primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .examples {
+            margin-top: 2rem;
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+        }
+        
+        .example-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .example-button {
+            padding: 0.5rem 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .example-button:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .compress-container {
+                padding: 1rem;
+            }
+            
+            .url-actions {
+                flex-direction: column;
+            }
+            
+            .example-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="compress-container">
+        <h1>🚀 make-sites Compression Tool</h1>
+        <p class="subtitle">Create compressed data URLs for sharing web content</p>
+        
+        <div class="compress-form">
+            <div class="form-group">
+                <label for="format">Content Format</label>
+                <select id="format">
+                    <option value="html">HTML</option>
+                    <option value="markdown">Markdown</option>
+                    <option value="json">JSON</option>
+                    <option value="text">Plain Text</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="content">Content</label>
+                <textarea id="content" placeholder="Enter your content here..."></textarea>
+            </div>
+            
+            <button class="compress-button" onclick="compressContent()">
+                Compress & Generate URL
+            </button>
+        </div>
+        
+        <div id="result" class="result-section hidden">
+            <h2>Compression Results</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="original-size">-</div>
+                    <div class="stat-label">Original Size</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="compressed-size">-</div>
+                    <div class="stat-label">Compressed Size</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="compression-ratio">-</div>
+                    <div class="stat-label">Space Saved</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="compression-method">-</div>
+                    <div class="stat-label">Method</div>
+                </div>
+            </div>
+            
+            <h3>Generated URL</h3>
+            <div class="url-result" id="generated-url"></div>
+            
+            <div class="url-actions">
+                <button class="action-button primary" onclick="copyUrl()">Copy URL</button>
+                <a class="action-button" id="view-link" href="#" target="_blank">View Result</a>
+                <button class="action-button" onclick="downloadUrl()">Download as File</button>
+            </div>
+        </div>
+        
+        <div class="examples">
+            <h2>Quick Examples</h2>
+            <p>Try these examples to see how make-sites works:</p>
+            
+            <div class="example-buttons">
+                <button class="example-button" onclick="loadExample('html')">HTML Page</button>
+                <button class="example-button" onclick="loadExample('markdown')">Markdown Doc</button>
+                <button class="example-button" onclick="loadExample('json')">JSON Data</button>
+                <button class="example-button" onclick="loadExample('api')">API Documentation</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/compression.js"></script>
+    <script>
+        let compression = new MakeSitesCompression();
+        let generatedUrl = '';
+        
+        async function compressContent() {
+            const button = document.querySelector('.compress-button');
+            const content = document.getElementById('content').value.trim();
+            const format = document.getElementById('format').value;
+            
+            if (!content) {
+                alert('Please enter some content to compress');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Compressing...';
+            
+            try {
+                const compressed = await compression.compress(content, format);
+                const stats = compression.getStats(content, compressed);
+                
+                // Update stats
+                document.getElementById('original-size').textContent = stats.readable.original;
+                document.getElementById('compressed-size').textContent = stats.readable.compressed;
+                document.getElementById('compression-ratio').textContent = stats.ratio + '%';
+                document.getElementById('compression-method').textContent = compression.supportsBrotli ? 'Brotli' : 'Gzip';
+                
+                // Generate URL
+                const baseUrl = window.location.origin + window.location.pathname.replace('compress.html', '');
+                generatedUrl = baseUrl + '#' + compressed;
+                
+                document.getElementById('generated-url').textContent = generatedUrl;
+                document.getElementById('view-link').href = generatedUrl;
+                
+                // Show results
+                document.getElementById('result').classList.remove('hidden');
+                
+            } catch (error) {
+                alert('Compression failed: ' + error.message);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Compress & Generate URL';
+            }
+        }
+        
+        function copyUrl() {
+            navigator.clipboard.writeText(generatedUrl).then(() => {
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy URL');
+            });
+        }
+        
+        function downloadUrl() {
+            const blob = new Blob([generatedUrl], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'make-sites-url.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function loadExample(type) {
+            const examples = {
+                html: {
+                    format: 'html',
+                    content: `<!DOCTYPE html>
+<html>
+<head>
+    <title>My Example Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 2rem; }
+        .highlight { background: #fef3c7; padding: 1rem; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to my site!</h1>
+    <div class="highlight">
+        <p>This entire page exists within the URL! 🚀</p>
+    </div>
+    <ul>
+        <li>No server required</li>
+        <li>Portable and shareable</li>
+        <li>Works offline</li>
+    </ul>
+</body>
+</html>`
+                },
+                markdown: {
+                    format: 'markdown',
+                    content: `# My Markdown Document
+
+This is a **markdown** document that will be rendered beautifully!
+
+## Features
+
+- Automatic table of contents
+- Syntax highlighting
+- Mobile responsive
+- *Fast* loading
+
+## Code Example
+
+\`\`\`javascript
+function greet(name) {
+    return \`Hello, \${name}!\`;
+}
+\`\`\`
+
+> This entire document exists within the URL!`
+                },
+                json: {
+                    format: 'json',
+                    content: `{
+  "name": "make-sites Example",
+  "version": "1.0.0",
+  "description": "JSON data visualization example",
+  "features": [
+    "Syntax highlighting",
+    "Data statistics",
+    "Mobile responsive",
+    "Fast rendering"
+  ],
+  "config": {
+    "compression": "brotli",
+    "format": "json",
+    "responsive": true
+  },
+  "stats": {
+    "objects": 4,
+    "arrays": 1,
+    "total_keys": 8
+  }
+}`
+                },
+                api: {
+                    format: 'html',
+                    content: `<!DOCTYPE html>
+<html>
+<head>
+    <title>API Documentation</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+        .endpoint { background: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+        .method { background: #28a745; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
+        .path { font-family: monospace; font-weight: bold; margin-left: 0.5rem; }
+        code { background: #e9ecef; padding: 0.2rem 0.4rem; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>📚 API Documentation</h1>
+    
+    <div class="endpoint">
+        <span class="method">GET</span>
+        <span class="path">/api/users</span>
+        <p>Retrieve a list of all users</p>
+        <h4>Response</h4>
+        <code>200 OK</code> - Returns array of user objects
+    </div>
+    
+    <div class="endpoint">
+        <span class="method">POST</span>
+        <span class="path">/api/users</span>
+        <p>Create a new user</p>
+        <h4>Request Body</h4>
+        <pre>{"name": "string", "email": "string"}</pre>
+    </div>
+    
+    <p><em>This entire API documentation exists within the URL!</em></p>
+</body>
+</html>`
+                }
+            };
+            
+            const example = examples[type];
+            if (example) {
+                document.getElementById('format').value = example.format;
+                document.getElementById('content').value = example.content;
+            }
+        }
+        
+        // Auto-resize textarea
+        document.getElementById('content').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    </script>
+</body>
+</html>
