@@ -306,7 +306,7 @@
                 document.getElementById('compression-method').textContent = compression.supportsBrotli ? 'Brotli' : 'Gzip';
                 
                 // Generate URL
-                const baseUrl = window.location.origin + window.location.pathname.replace('compress.html', '');
+                const baseUrl = 'https://smeltsermake.github.io/make-sites';
                 generatedUrl = baseUrl + '#' + compressed;
                 
                 document.getElementById('generated-url').textContent = generatedUrl;
