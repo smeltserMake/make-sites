@@ -69,6 +69,17 @@ class MakeSitesCompression {
                 const decompressed = pako.ungzip(data, { to: 'string' });
                 content = decompressed;
                 
+            } else if (metadata.c === 'br') {
+                // Handle Brotli decompression using browser API
+                console.log('Decompressing Brotli data...');
+                if (!('DecompressionStream' in window)) {
+                    throw new Error('Browser does not support DecompressionStream for Brotli');
+                }
+                
+                const stream = new DecompressionStream('deflate-raw');
+                const decompressed = await this._streamDecompress(data, stream);
+                content = new TextDecoder().decode(decompressed);
+                
             } else if (metadata.c === 'none') {
                 // No compression - just decode
                 console.log('No compression, decoding directly...');
@@ -85,6 +96,43 @@ class MakeSitesCompression {
             console.error('Decompression failed:', error);
             throw new Error('Failed to decompress content: ' + error.message);
         }
+    }
+
+    /**
+     * Stream decompression helper for browser DecompressionStream API
+     * @private
+     */
+    async _streamDecompress(data, decompressionStream) {
+        const writer = decompressionStream.writable.getWriter();
+        const reader = decompressionStream.readable.getReader();
+        
+        // Write compressed data
+        await writer.write(data);
+        await writer.close();
+        
+        // Read decompressed data
+        const chunks = [];
+        let done = false;
+        
+        while (!done) {
+            const { value, done: readerDone } = await reader.read();
+            done = readerDone;
+            if (value) {
+                chunks.push(value);
+            }
+        }
+        
+        // Combine chunks
+        const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+        const result = new Uint8Array(totalLength);
+        let offset = 0;
+        
+        for (const chunk of chunks) {
+            result.set(chunk, offset);
+            offset += chunk.length;
+        }
+        
+        return result;
     }
 
     /**
